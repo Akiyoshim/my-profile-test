@@ -1,470 +1,1237 @@
 <!DOCTYPE html>
-<html lang="ja" class="scroll-smooth">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Akiyoshi's Portfolio</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome (for icons) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        forest: {
-                            50: '#f2f7f4',
-                            100: '#e1ede7',
-                            600: '#2d5a27',
-                            700: '#1e3f1a',
-                            800: '#142b12',
-                            900: '#0b180a',
-                        },
-                        curry: {
-                            500: '#d97706',
-                            600: '#b45309',
-                        },
-                        frontale: {
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Noto Sans JP', 'Montserrat', 'sans-serif'],
-                        title: ['Montserrat', 'Noto Sans JP', 'sans-serif'],
-                    }
-                }
+    <!-- Font Awesome for elegant UI icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Three.js (Background Interactive Fluid) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #1a301e; /* 深い森のトーン */
+            --text-body: #3c473f;
+            --accent-forest: #2d5a27;
+            --accent-curry: #d97706;
+            --accent-blue: #0ea5e9; /* フロンターレブルー */
+            --bg-color: #f7faf8;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            color: var(--primary-color);
+            overflow: hidden;
+            height: 100vh;
+            line-height: 1.8;
+        }
+
+        body.loaded {
+            overflow-y: auto; 
+            height: auto;
+        }
+
+        /* -----------------------------------------
+           Loading Screen
+        ----------------------------------------- */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 1.2s;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: scale(1.05);
+        }
+
+        .loading-logo {
+            font-family: 'Italiana', serif;
+            font-size: 3rem;
+            color: var(--accent-forest);
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.15em;
+            font-weight: bold;
+        }
+
+        .loading-bar-container {
+            width: 220px;
+            height: 3px;
+            background: #e6ede8;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-forest), var(--accent-blue), var(--accent-curry));
+            transition: width 0.1s linear;
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            font-family: 'Italiana', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.2em;
+            color: #718776;
+        }
+
+        /* -----------------------------------------
+           Background Canvas & Layout
+        ----------------------------------------- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.85; 
+        }
+
+        .page-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        
+        .page-container.visible {
+            opacity: 1;
+        }
+
+        section {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 7rem 2rem;
+            box-sizing: border-box;
+        }
+
+        h1, h2, h3 { margin: 0; }
+
+        .section-title {
+            font-family: 'Italiana', serif;
+            font-size: clamp(2.8rem, 5vw, 4.2rem);
+            margin-bottom: 3.5rem;
+            background: linear-gradient(45deg, var(--accent-forest), var(--accent-curry));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: inline-block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.03));
+            text-align: center;
+        }
+        
+        /* -----------------------------------------
+           Navigation
+        ----------------------------------------- */
+        nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 2.5rem 4rem;
+            z-index: 100;
+            display: flex;
+            gap: 2.5rem;
+            opacity: 0;
+            transition: opacity 1s ease 1s;
+        }
+        .loaded nav { opacity: 1; }
+
+        .nav-item {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-family: 'Italiana', serif;
+            font-size: 1.15rem;
+            position: relative;
+            letter-spacing: 0.1em;
+            transition: color 0.3s;
+            font-weight: 600;
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 1px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--accent-forest);
+            transform-origin: bottom right;
+            transition: transform 0.25s ease-out;
+        }
+        .nav-item:hover { color: var(--accent-forest); }
+        .nav-item:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+
+        @media (max-width: 600px) {
+            nav {
+                width: 100%;
+                justify-content: center;
+                padding: 1.5rem 1rem;
+                background: rgba(255,255,255,0.7);
+                backdrop-filter: blur(10px);
+                gap: 1.5rem;
             }
         }
-    </script>
-    <style>
-        /* フェードインアニメーション用のクラス */
-        .fade-in {
+
+        /* -----------------------------------------
+           Hero Section
+        ----------------------------------------- */
+        .hero-section {
+            height: 100vh;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-content {
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transition: all 1.8s cubic-bezier(0.2, 1, 0.3, 1) 0.5s;
         }
-        .fade-in.appear {
+        .loaded .hero-content {
             opacity: 1;
             transform: translateY(0);
         }
+
+        .hero-logo {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+            color: var(--accent-forest);
+            letter-spacing: 0.2em;
+            margin-bottom: 1.5rem;
+            display: block;
+            font-weight: 500;
+        }
+
+        .hero-title {
+            font-family: 'Italiana', serif;
+            font-size: clamp(4rem, 12vw, 8.5rem);
+            font-weight: 400;
+            line-height: 1.0;
+            color: var(--primary-color);
+            margin-bottom: 2.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            color: var(--text-body);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Italiana', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-forest);
+            font-weight: bold;
+            animation: bounce 2s infinite;
+            opacity: 0;
+            transition: opacity 1s ease 1.5s;
+        }
+        .loaded .scroll-hint { opacity: 1; }
+
+        /* -----------------------------------------
+           About Section (Glass Card + Elegant Avatar)
+        ----------------------------------------- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 5rem 4rem;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 0 30px 70px rgba(45, 90, 39, 0.08); 
+            display: flex;
+            flex-direction: row;
+            gap: 5rem;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1s ease;
+        }
+
+        @media (max-width: 800px) {
+            .glass-card {
+                flex-direction: column;
+                padding: 3rem 2rem;
+                gap: 2.5rem;
+            }
+        }
+
+        .glass-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .profile-img-wrapper {
+            flex: 1;
+            overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.08);
+            max-width: 380px;
+            width: 100%;
+            position: relative;
+            aspect-ratio: 4/5;
+        }
+        
+        .profile-img-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 1.2s cubic-bezier(0.15, 1, 0.3, 1);
+        }
+        .profile-img-wrapper:hover .profile-img {
+            transform: scale(1.05);
+        }
+
+        .profile-text {
+            flex: 1.3;
+            text-align: left;
+        }
+
+        .profile-name {
+            font-family: 'Italiana', serif;
+            font-size: 3.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            letter-spacing: 0.05em;
+        }
+        
+        .profile-role {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.15rem;
+            color: var(--accent-forest);
+            letter-spacing: 0.05em;
+            margin-bottom: 2rem;
+            display: block;
+            font-weight: 600;
+        }
+        
+        .profile-desc {
+            line-height: 2.2;
+            color: var(--text-body);
+            margin-bottom: 2.5rem;
+            font-size: 1.05rem;
+            font-weight: 400;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .tag {
+            padding: 0.3rem 1rem;
+            background: rgba(45, 90, 39, 0.06);
+            border: 1px solid rgba(45, 90, 39, 0.1);
+            color: var(--accent-forest);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* -----------------------------------------
+           Favorites Section (Smooth Slider with Images)
+        ----------------------------------------- */
+        .slider-section {
+            padding: 6rem 0 0 0;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(225, 237, 231, 0.3) 100%);
+        }
+
+        .slider-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .slider-header-wrapper {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 20;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            width: 100%;
+            padding: 1rem 0;
+        }
+
+        .slide {
+            min-width: 100%;
+            padding: 0 1.5rem;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.4;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: scale(0.92);
+        }
+        
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .work-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            padding: 3.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 65px rgba(45, 90, 39, 0.05);
+            display: flex;
+            flex-direction: row;
+            gap: 4rem;
+            width: 100%;
+            max-width: 1000px;
+            align-items: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        @media (max-width: 768px) {
+            .work-card {
+                flex-direction: column;
+                padding: 2rem;
+                gap: 2rem;
+            }
+        }
+
+        .work-img-area {
+            flex: 1.2;
+            overflow: hidden;
+            border-radius: 16px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            background-color: #e1ede7;
+            aspect-ratio: 4/3;
+        }
+        
+        .work-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1.2s cubic-bezier(0.15, 1, 0.3, 1);
+            display: block;
+        }
+        .work-card:hover .work-img {
+            transform: scale(1.08);
+        }
+
+        .work-info {
+            flex: 1.2;
+            text-align: left;
+        }
+
+        .work-cat {
+            font-family: 'Italiana', serif;
+            font-size: 1rem;
+            color: var(--accent-forest);
+            letter-spacing: 0.15em;
+            margin-bottom: 0.8rem;
+            display: block;
+            font-weight: 700;
+        }
+        
+        .work-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.6rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            color: var(--primary-color);
+        }
+        
+        .work-desc {
+            font-size: 1rem;
+            line-height: 1.9;
+            color: var(--text-body);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .slider-controls {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 1rem;
+            z-index: 20;
+        }
+        
+        .nav-btn {
+            width: 55px;
+            height: 55px;
+            border: 1px solid var(--glass-border);
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--accent-forest);
+            padding-bottom: 2px;
+            font-weight: bold;
+        }
+        .nav-btn:hover {
+            transform: scale(1.08);
+            background: var(--accent-forest);
+            color: #ffffff;
+            box-shadow: 0 15px 30px rgba(45, 90, 39, 0.25);
+            border-color: var(--accent-forest);
+        }
+
+        /* -----------------------------------------
+           Contact Section
+        ----------------------------------------- */
+        .contact-form-wrapper {
+            position: relative; 
+            z-index: 50;        
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(30px);
+            padding: 4.5rem 5rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 650px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.04);
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        @media (max-width: 600px) {
+            .contact-form-wrapper {
+                padding: 3rem 2rem;
+            }
+        }
+
+        .contact-form-wrapper.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .contact-intro {
+            margin-bottom: 3rem;
+            line-height: 2;
+            color: var(--text-body);
+            font-size: 1.05rem;
+            font-weight: 500;
+        }
+
+        .form-row {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .form-label {
+            display: block;
+            font-family: 'Italiana', serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.6rem;
+            color: var(--accent-forest);
+            font-weight: 800;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 1.1rem;
+            border: 1.5px solid #e1ede7;
+            border-radius: 12px;
+            background: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            color: var(--primary-color);
+        }
+        .form-control::placeholder {
+            color: #abbcb0;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-forest);
+            box-shadow: 0 0 0 4px rgba(45, 90, 39, 0.1);
+        }
+        
+        .submit-btn {
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.1rem 4.5rem;
+            background: linear-gradient(45deg, var(--accent-forest), #4f834a);
+            color: #ffffff;
+            border: none;
+            font-family: 'Italiana', serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(45, 90, 39, 0.2);
+            font-weight: bold;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(45, 90, 39, 0.35);
+        }
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        footer {
+            padding: 4rem 2rem 2rem 2rem;
+            font-size: 0.85rem;
+            color: #718776;
+            text-align: center;
+            font-family: 'Italiana', serif;
+            letter-spacing: 0.05em;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, 8px); }
+        }
+
     </style>
 </head>
-<body class="bg-forest-50 text-slate-800 font-sans selection:bg-forest-600 selection:text-white overflow-x-hidden">
+<body>
 
-    <!-- ナビゲーションバー -->
-    <nav class="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md z-50 shadow-sm border-b border-forest-100 transition-all duration-300">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- ロゴ -->
-                <div class="flex-shrink-0">
-                    <a href="#home" class="font-title font-bold text-xl tracking-wider text-forest-700">
-                        AKIYOSHI<span class="text-curry-500">.</span>
-                    </a>
+    <!-- ローディング画面 -->
+    <div id="loading-screen">
+        <div class="loading-logo">Akiyoshi</div>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loading-bar"></div>
+        </div>
+        <p class="loading-text">LOADING PORTFOLIO...</p>
+    </div>
+
+    <!-- インタラクティブ流体用背景キャンバス -->
+    <div id="canvas-container"></div>
+
+    <!-- コンテンツコンテナ -->
+    <div class="page-container">
+
+        <!-- ナビゲーション -->
+        <nav>
+            <a href="#about" class="nav-item">About</a>
+            <a href="#favorites" class="nav-item">Favorites</a>
+            <a href="#contact" class="nav-item">Contact</a>
+        </nav>
+
+        <!-- ヒーローセクション -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-logo">My Profile</span>
+                <h1 class="hero-title">Akiyoshi</h1>
+                <p class="hero-desc">
+                    Always Learning, Always Exploring
+                </p>
+            </div>
+            <div class="scroll-hint">SCROLL DOWN</div>
+        </section>
+
+        <!-- 自己紹介セクション -->
+        <section id="about">
+            <h2 class="section-title">About Me</h2>
+            <div class="glass-card scroll-anim">
+                <div class="profile-img-wrapper">
+                    <!-- Akiyoshiさんを表現するナチュラルな冒険・森のイメージ -->
+                    <img src="images/1.jpg" alt="Explorer Profile" class="profile-img">
                 </div>
-                <!-- デスクトップメニュー -->
-                <div class="hidden md:flex space-x-8">
-                    <a href="#home" class="text-slate-600 hover:text-forest-600 font-medium transition-colors">Home</a>
-                    <a href="#about" class="text-slate-600 hover:text-forest-600 font-medium transition-colors">About Me</a>
-                    <a href="#favorites" class="text-slate-600 hover:text-forest-600 font-medium transition-colors">Favorites</a>
-                    <a href="#contact" class="text-slate-600 hover:text-forest-600 font-medium transition-colors">Contact</a>
+                <div class="profile-text">
+                    <h3 class="profile-name">Akiyoshi</h3>
+                    <span class="profile-role">Always Learning, Always Exploring</span>
+                    <p class="profile-desc">
+                        日常のあらゆる瞬間から新しい学びや体験を吸収し、常に自分の可能性を開拓し続けています。<br><br>
+                        探究心を満たしてくれる奥深いスパイスカレー、フィールドで一体となって応援し、運営するフットボール、そして心を静かにクリアに導いてくれる森の景色。それらを通じて得られる刺激と癒やしが、私の活動の原動力です。
+                    </p>
+                    <div class="tag-container">
+                        <span class="tag"># Spice Curry</span>
+                        <span class="tag"># Football</span>
+                        <span class="tag"># Forest</span>
+                        <span class="tag"># Frontale</span>
+                    </div>
                 </div>
-                <!-- モバイルメニューボタン -->
-                <div class="md:hidden">
-                    <button id="mobile-menu-btn" class="text-slate-600 hover:text-forest-600 focus:outline-none p-2" aria-label="メニューを開く">
-                        <i class="fa-solid fa-bars text-xl"></i>
+            </div>
+        </section>
+
+        <!-- 好きなものスライダーセクション -->
+        <section id="favorites" class="slider-section">
+            <div class="slider-container">
+                <div class="slider-header-wrapper">
+                    <h2 class="section-title" style="margin-bottom: 0;">My Favorites</h2>
+                </div>
+
+                <div class="slider-wrapper" id="sliderWrapper">
+                    
+                    <!-- スライド1: Spice Curry -->
+                    <div class="slide active">
+                        <div class="work-card">
+                            <div class="work-img-area">
+                                <img src="images/2.jpg" alt="Spice Curry" class="work-img">
+                            </div>
+                            <div class="work-info">
+                                <span class="work-cat">Favorite 01</span>
+                                <h3 class="work-title">Spice Curry</h3>
+                                <p class="work-desc">
+                                    スパイスカレーが大好きです。様々なスパイスの個性豊かな香りと調合バランスが織りなす無限のバリエーションに魅了され、自ら調理してその味わいの化学反応を楽しんでいます。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- スライド2: Football -->
+                    <div class="slide">
+                        <div class="work-card">
+                            <div class="work-img-area">
+                                <img src="images/3.jpg" alt="Football" class="work-img">
+                            </div>
+                            <div class="work-info">
+                                <span class="work-cat">Favorite 02</span>
+                                <h3 class="work-title">Football</h3>
+                                <p class="work-desc">
+                                    プレーすることはもちろん、スタジアム観戦、さらにチーム運営に関わる部分まで、多角的にフットボールの魅力を全身で楽しんでいます。特にJリーグの「川崎フロンターレ」を全力で応援しています！
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- スライド3: Forest -->
+                    <div class="slide">
+                        <div class="work-card">
+                            <div class="work-img-area">
+                                <img src="images/4.jpg" alt="Forest" class="work-img">
+                            </div>
+                            <div class="work-info">
+                                <span class="work-cat">Favorite 03</span>
+                                <h3 class="work-title">Forest</h3>
+                                <p class="work-desc">
+                                    静謐で穏やかな森に囲まれる時間が好きです。澄んだ空気、木々の揺れる音、大地が放つ香り。日常から一度離れて自然の調和に身を置くことで、新しい学びへのインスピレーションが生まれます。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- スライダーコントロール -->
+                <div class="slider-controls">
+                    <div class="nav-btn" id="prevBtn">〈</div>
+                    <div class="nav-btn" id="nextBtn">〉</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- お問い合わせセクション -->
+        <section id="contact">
+            <h2 class="section-title">Contact</h2>
+            <div class="contact-form-wrapper scroll-anim">
+                <p class="contact-intro">
+                    ご質問、メッセージ、または共通の趣味についてのお話など、<br>どうぞお気軽にご連絡ください！
+                </p>
+                <form id="myContactForm">
+                    <div class="form-row">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="お名前" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="メールアドレス" required>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">Message</label>
+                        <textarea name="message" class="form-control" rows="4" placeholder="メッセージ内容をご記入ください..." style="resize: vertical;" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <span>Send Message</span>
+                        <i class="fa-solid fa-paper-plane" style="font-size: 0.95rem;"></i>
                     </button>
-                </div>
-            </div>
-        </div>
-        <!-- モバイルドロップダウンメニュー -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-forest-100">
-            <div class="px-2 pt-2 pb-4 space-y-1">
-                <a href="#home" class="block px-3 py-2 rounded-md text-slate-600 hover:bg-forest-50 hover:text-forest-600 font-medium">Home</a>
-                <a href="#about" class="block px-3 py-2 rounded-md text-slate-600 hover:bg-forest-50 hover:text-forest-600 font-medium">About Me</a>
-                <a href="#favorites" class="block px-3 py-2 rounded-md text-slate-600 hover:bg-forest-50 hover:text-forest-600 font-medium">Favorites</a>
-                <a href="#contact" class="block px-3 py-2 rounded-md text-slate-600 hover:bg-forest-50 hover:text-forest-600 font-medium">Contact</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ヒーローセクション -->
-    <header id="home" class="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-forest-100 via-forest-50/50 to-white pt-16">
-        <!-- 背景のグラフィックサークル（抽象的な森と太陽のイメージ） -->
-        <div class="absolute inset-0 overflow-hidden pointer-events-none">
-            <div class="absolute top-1/4 -left-32 w-96 h-96 bg-forest-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
-            <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-yellow-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
-            <div class="absolute top-1/2 left-1/3 w-72 h-72 bg-sky-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40"></div>
-        </div>
-
-        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <span class="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-widest text-forest-600 uppercase bg-forest-100 rounded-full">
-                Welcome to My Space
-            </span>
-            <h1 class="font-title text-5xl sm:text-7xl font-bold tracking-tight text-forest-700 mb-6">
-                Akiyoshi
-            </h1>
-            <p class="font-title text-xl sm:text-2xl font-light text-slate-500 tracking-wide mb-10 max-w-2xl mx-auto">
-                Always Learning, <span class="text-forest-600 font-normal">Always Exploring</span>
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-                <a href="#favorites" class="w-full sm:w-auto px-8 py-3.5 bg-forest-600 hover:bg-forest-700 text-white font-medium rounded-full shadow-lg shadow-forest-600/10 hover:shadow-forest-700/20 transform hover:-translate-y-0.5 transition-all duration-200 text-center">
-                    好きなものを見る
-                </a>
-                <a href="#contact" class="w-full sm:w-auto px-8 py-3.5 bg-white hover:bg-slate-50 text-slate-700 font-medium rounded-full border border-slate-200 shadow-sm transform hover:-translate-y-0.5 transition-all duration-200 text-center">
-                    お問い合わせ
-                </a>
-            </div>
-        </div>
-
-        <!-- スクロールダウンのヒント -->
-        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <a href="#about" class="text-slate-400 hover:text-forest-600 transition-colors" aria-label="コンテンツへスクロール">
-                <i class="fa-solid fa-chevron-down text-xl"></i>
-            </a>
-        </div>
-    </header>
-
-    <!-- プロフィール紹介 (About Me) -->
-    <section id="about" class="py-24 bg-white relative">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="font-title text-3xl sm:text-4xl font-bold text-forest-700 mb-4">About Me</h2>
-                <div class="w-16 h-1 bg-curry-500 mx-auto rounded-full"></div>
-            </div>
-
-            <div class="grid md:grid-cols-12 gap-12 items-center">
-                <!-- グラフィックアバター -->
-                <div class="md:col-span-5 flex justify-center fade-in">
-                    <div class="relative w-64 h-64">
-                        <!-- 装飾用の背面枠 -->
-                        <div class="absolute inset-0 bg-gradient-to-tr from-forest-600 to-curry-500 rounded-2xl transform rotate-6 scale-95 opacity-20"></div>
-                        <!-- アバター本体 -->
-                        <div class="absolute inset-0 bg-forest-50 border-2 border-forest-600/20 rounded-2xl flex flex-col items-center justify-center shadow-md p-6 text-center transform -rotate-3 hover:rotate-0 transition-transform duration-300">
-                            <div class="w-24 h-24 bg-forest-100 rounded-full flex items-center justify-center mb-4 text-forest-600">
-                                <i class="fa-solid fa-user-astronaut text-4xl"></i>
-                            </div>
-                            <h3 class="font-title font-bold text-lg text-forest-700">Akiyoshi</h3>
-                            <p class="text-xs text-slate-400 mt-1">Explorer & Lifelong Learner</p>
-                            <div class="flex space-x-3 mt-4 text-slate-400">
-                                <span class="hover:text-curry-500 transition-colors"><i class="fa-solid fa-pepper-hot"></i></span>
-                                <span class="hover:text-frontale-500 transition-colors"><i class="fa-solid fa-futbol"></i></span>
-                                <span class="hover:text-forest-600 transition-colors"><i class="fa-solid fa-tree"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 紹介テキスト -->
-                <div class="md:col-span-7 space-y-6 fade-in">
-                    <h3 class="text-xl sm:text-2xl font-semibold text-slate-800">
-                        常に学び、探求し続ける姿勢を大切に。
-                    </h3>
-                    <p class="text-slate-600 leading-relaxed">
-                        こんにちは、Akiyoshiです。日常のあらゆる瞬間から新しい知識や体験を吸収し、自分の可能性を広げることが私のパッションです。
-                    </p>
-                    <p class="text-slate-600 leading-relaxed">
-                        スパイスの奥深さを追求すること、フィールドやスタジアムで感動を分かち合うこと、そして豊かな緑に包まれて心をリセットすること。これらのお気に入りの時間が、私の探究心と毎日の活力を支えています。
-                    </p>
-                    
-                    <!-- 簡易スキル・スタンス表現 -->
-                    <div class="pt-4 flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-forest-50 text-forest-700 text-xs font-medium rounded-full border border-forest-100">
-                            # ライフスタンス
-                        </span>
-                        <span class="px-3 py-1 bg-yellow-50 text-curry-600 text-xs font-medium rounded-full border border-yellow-100">
-                            # 常にインプット
-                        </span>
-                        <span class="px-3 py-1 bg-sky-50 text-frontale-600 text-xs font-medium rounded-full border border-sky-100">
-                            # フロンターレサポ
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 好きなもの3選 (Favorites) -->
-    <section id="favorites" class="py-24 bg-forest-50 relative">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="font-title text-3xl sm:text-4xl font-bold text-forest-700 mb-4">My Favorites</h2>
-                <p class="text-slate-500 text-sm max-w-md mx-auto">私のパッションを刺激する、愛してやまない3つのテーマ。</p>
-                <div class="w-16 h-1 bg-forest-600 mx-auto rounded-full mt-4"></div>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- 好きなもの 1: Spice Curry -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full fade-in">
-                    <!-- ビジュアル要素（アイコンとカラー） -->
-                    <div class="h-48 bg-gradient-to-br from-amber-400 to-curry-600 flex items-center justify-center text-white relative">
-                        <i class="fa-solid fa-pepper-hot text-6xl opacity-90 drop-shadow-md"></i>
-                        <span class="absolute bottom-4 right-4 text-xs font-semibold tracking-wider uppercase bg-black/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                            Food & Science
-                        </span>
-                    </div>
-                    <div class="p-8 flex flex-col flex-grow">
-                        <h3 class="font-title text-2xl font-bold text-slate-800 mb-3 flex items-center justify-between">
-                            Spice Curry
-                            <span class="text-curry-500 text-sm"><i class="fa-solid fa-star"></i></span>
-                        </h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            スパイスカレーが大好きです。様々なスパイスの調合によって、無限のバリエーションが生み出される奥深さに惹かれています。お店を開拓するのはもちろん、自宅でのスパイス調合も楽しみのひとつです。
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 好きなもの 2: Football -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full fade-in">
-                    <!-- ビジュアル要素（アイコンとカラー） -->
-                    <div class="h-48 bg-gradient-to-br from-frontale-400 to-blue-700 flex items-center justify-center text-white relative">
-                        <i class="fa-solid fa-futbol text-6xl opacity-90 drop-shadow-md"></i>
-                        <span class="absolute bottom-4 right-4 text-xs font-semibold tracking-wider uppercase bg-black/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                            Sports & Team
-                        </span>
-                    </div>
-                    <div class="p-8 flex flex-col flex-grow">
-                        <h3 class="font-title text-2xl font-bold text-slate-800 mb-3 flex items-center justify-between">
-                            Football
-                            <span class="text-frontale-500 text-sm"><i class="fa-solid fa-star"></i></span>
-                        </h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            プレーすること、スタジアムや画面を通じて観戦すること、そしてチーム運営に携わることまで幅広く全力で楽しんでいます。特にJリーグの「川崎フロンターレ」を熱くサポートしています！
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 好きなもの 3: Forest -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full fade-in">
-                    <!-- ビジュアル要素（アイコンとカラー） -->
-                    <div class="h-48 bg-gradient-to-br from-forest-600 to-forest-800 flex items-center justify-center text-white relative">
-                        <i class="fa-solid fa-tree text-6xl opacity-90 drop-shadow-md"></i>
-                        <span class="absolute bottom-4 right-4 text-xs font-semibold tracking-wider uppercase bg-black/20 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                            Nature & Peace
-                        </span>
-                    </div>
-                    <div class="p-8 flex flex-col flex-grow">
-                        <h3 class="font-title text-2xl font-bold text-slate-800 mb-3 flex items-center justify-between">
-                            Forest
-                            <span class="text-forest-600 text-sm"><i class="fa-solid fa-star"></i></span>
-                        </h3>
-                        <p class="text-slate-600 leading-relaxed">
-                            静寂な森の中に身を置くのが好きです。木々のざわめき、鳥の声、土や葉の香りに包まれることで、頭がクリアになり、心地よい癒やしとともにクリエイティブなインスピレーションが得られます。
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- お問い合わせ (Contact) -->
-    <section id="contact" class="py-24 bg-white relative">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16 fade-in">
-                <h2 class="font-title text-3xl sm:text-4xl font-bold text-forest-700 mb-4">Contact</h2>
-                <p class="text-slate-500 text-sm">何かご質問やメッセージがございましたら、お気軽にどうぞ！</p>
-                <div class="w-16 h-1 bg-curry-500 mx-auto rounded-full mt-4"></div>
-            </div>
-
-            <!-- 問い合わせフォームカード -->
-            <div class="bg-forest-50 p-8 sm:p-10 rounded-3xl border border-forest-100 shadow-sm fade-in">
-                <form id="gas-contact-form" class="space-y-6">
-                    <div class="grid sm:grid-cols-2 gap-6">
-                        <div>
-                            <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">お名前</label>
-                            <input type="text" id="name" name="name" required class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600 transition-all text-slate-800" placeholder="山田 太郎">
-                        </div>
-                        <div>
-                            <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">メールアドレス</label>
-                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600 transition-all text-slate-800" placeholder="example@email.com">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="subject" class="block text-sm font-semibold text-slate-700 mb-2">件名</label>
-                        <input type="text" id="subject" name="subject" required class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600 transition-all text-slate-800" placeholder="お問い合わせ件名">
-                    </div>
-
-                    <div>
-                        <label for="message" class="block text-sm font-semibold text-slate-700 mb-2">メッセージ</label>
-                        <textarea id="message" name="message" rows="5" required class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:border-forest-600 focus:ring-1 focus:ring-forest-600 transition-all text-slate-800" placeholder="ここにメッセージを入力してください..."></textarea>
-                    </div>
-
-                    <!-- 送信ボタン / ローディング表示 -->
-                    <div class="pt-2">
-                        <button type="submit" id="submit-btn" class="w-full sm:w-auto px-8 py-3.5 bg-forest-600 hover:bg-forest-700 text-white font-semibold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2">
-                            <span>メッセージを送信する</span>
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
-                    </div>
                 </form>
             </div>
-        </div>
-    </section>
+            <footer>
+                &copy; 2026 Akiyoshi. All Rights Reserved.
+            </footer>
+        </section>
 
-    <!-- フッター -->
-    <footer class="bg-forest-900 text-slate-400 py-12 border-t border-forest-800">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <h3 class="font-title font-bold text-lg text-white tracking-widest">
-                AKIYOSHI<span class="text-curry-500">.</span>
-            </h3>
-            <p class="text-sm max-w-xs mx-auto">
-                Always Learning, Always Exploring.
-            </p>
-            <div class="flex justify-center space-x-6 text-xl">
-                <span class="hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-pepper-hot"></i></span>
-                <span class="hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-futbol"></i></span>
-                <span class="hover:text-white transition-colors cursor-pointer"><i class="fa-solid fa-tree"></i></span>
-            </div>
-            <div class="pt-6 border-t border-forest-800/60 text-xs">
-                &copy; 2026 Akiyoshi. All rights reserved.
-            </div>
-        </div>
-    </footer>
+    </div>
 
-    <!-- 結果通知用カスタムモーダル (ブラウザデフォルトのalert()を排除) -->
-    <div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 text-center">
-            <div id="modal-icon" class="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 text-3xl">
-                <!-- JavaScriptでアイコンを挿入 -->
-            </div>
-            <h3 id="modal-title" class="text-xl font-bold text-slate-800 mb-2"></h3>
-            <p id="modal-desc" class="text-slate-500 text-sm mb-6"></p>
-            <button onclick="closeModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-xl transition-colors">
-                閉じる
-            </button>
+    <!-- 完了通知ポップアップモーダル -->
+    <div id="modal" style="position: fixed; inset: 0; background: rgba(26, 48, 30, 0.5); backdrop-filter: blur(8px); z-index: 10000; display: flex; items-center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; align-items: center;">
+        <div style="background: white; padding: 2.5rem; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.15); transform: scale(0.95); transition: transform 0.4s ease;" id="modalContent">
+            <div id="modalIcon" style="font-size: 3rem; margin-bottom: 1rem;"></div>
+            <h3 id="modalTitle" style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: bold; color: var(--primary-color);"></h3>
+            <p id="modalDesc" style="color: var(--text-body); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.6;"></p>
+            <button onclick="closeModal()" style="padding: 0.8rem 2.5rem; background: var(--accent-forest); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: background 0.3s; font-size: 1rem; width: 100%;">閉じる</button>
         </div>
     </div>
 
-    <!-- JavaScript ロジック -->
     <script>
-        // --- モバイルメニュー切り替え ---
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-
-        menuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
+        // --- Loading Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const loadingBar = document.getElementById('loading-bar');
+            const pageContainer = document.querySelector('.page-container');
+            const body = document.body;
+            
+            let progress = 0;
+            const timer = setInterval(() => {
+                progress += Math.random() * 8; 
+                if(progress >= 100) {
+                    progress = 100;
+                    clearInterval(timer);
+                    loadingBar.style.width = "100%";
+                    
+                    setTimeout(() => {
+                        loadingScreen.classList.add('hidden');
+                        pageContainer.classList.add('visible');
+                        body.classList.add('loaded');
+                        setTimeout(() => loadingScreen.style.display = 'none', 1500);
+                    }, 500);
+                } else {
+                    loadingBar.style.width = progress + "%";
+                }
+            }, 30);
         });
 
-        // ナビゲーションリンクがクリックされたらモバイルメニューを閉じる
-        const navLinks = mobileMenu.querySelectorAll('a');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-            });
-        });
-
-
-        // --- スクロール連動のフェードインアニメーション ---
-        const fadeElements = document.querySelectorAll('.fade-in');
-        const observerOptions = {
-            root: null,
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries, observer) => {
+        // --- Scroll Animation ---
+        const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('appear');
-                    observer.unobserve(entry.target); // 一度表示されたら監視を終了
+                if(entry.isIntersecting) {
+                    entry.target.classList.add('visible');
                 }
             });
-        }, observerOptions);
+        }, { threshold: 0.15 });
 
-        fadeElements.forEach(element => {
-            observer.observe(element);
-        });
+        document.querySelectorAll('.scroll-anim').forEach(el => observer.observe(el));
 
+        // --- Slider Logic ---
+        const sliderWrapper = document.getElementById('sliderWrapper');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let isAnimating = false;
 
-        // --- GASウェブアプリ連携お問い合わせフォーム送信 ---
-        const form = document.getElementById('gas-contact-form');
-        const submitBtn = document.getElementById('submit-btn');
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); // デフォルトの送信挙動を防止
-
-            // ローディング状態へ変更
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <i class="fa-solid fa-spinner animate-spin"></i>
-                <span>送信中...</span>
-            `;
-
-            const formData = new FormData(form);
-            const gasUrl = "https://script.google.com/macros/s/AKfycbxdBZ5SELYTDpTwFi-wWDPF-OcX7IiP7f1YWPeHy8ilS-YwyRxdWcUp9hbnwCSgjeHh/exec";
-
-            // GAS側にPOST（またはGET）でデータを非同期送信
-            // ※GASのCORS対応に合わせて、mode: 'no-cors' または通常のfetchでハンドリング
-            fetch(gasUrl, {
-                method: "POST",
-                body: formData,
-                mode: "no-cors" // CORS回避（レスポンスは直接読めなくなりますが、送信自体は成功します）
-            })
-            .then(() => {
-                // 送信成功（no-corsの場合、中身がエラーでもthenに入ることが多いため成功メッセージを表示します）
-                showModal(
-                    true,
-                    "送信完了",
-                    "メッセージが正常に送信されました。お問い合わせいただきありがとうございます！"
-                );
-                form.reset(); // フォーム内容をクリア
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                showModal(
-                    false,
-                    "送信エラー",
-                    "送信中にエラーが発生しました。時間を置いて再度お試しください。"
-                );
-            })
-            .finally(() => {
-                // ボタンを元に戻す
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `
-                    <span>メッセージを送信する</span>
-                    <i class="fa-solid fa-paper-plane text-xs"></i>
-                `;
+        function updateClasses() {
+            Array.from(sliderWrapper.children).forEach((slide, index) => {
+                if (index === 0) slide.classList.add('active');
+                else slide.classList.remove('active');
             });
-        });
+        }
+
+        function moveNext() {
+            if(isAnimating) return;
+            isAnimating = true;
+            
+            sliderWrapper.style.transition = 'transform 0.8s cubic-bezier(0.2, 1, 0.3, 1)';
+            sliderWrapper.style.transform = 'translateX(-100%)';
+            
+            setTimeout(() => {
+                sliderWrapper.style.transition = 'none';
+                sliderWrapper.appendChild(sliderWrapper.firstElementChild);
+                sliderWrapper.style.transform = 'translateX(0)';
+                updateClasses();
+                isAnimating = false;
+            }, 800);
+        }
+
+        function movePrev() {
+            if(isAnimating) return;
+            isAnimating = true;
+            
+            sliderWrapper.style.transition = 'none';
+            sliderWrapper.prepend(sliderWrapper.lastElementChild);
+            sliderWrapper.style.transform = 'translateX(-100%)';
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    sliderWrapper.style.transition = 'transform 0.8s cubic-bezier(0.2, 1, 0.3, 1)';
+                    sliderWrapper.style.transform = 'translateX(0)';
+                });
+            });
+            
+            setTimeout(() => {
+                updateClasses();
+                isAnimating = false;
+            }, 800);
+        }
+
+        nextBtn.addEventListener('click', moveNext);
+        prevBtn.addEventListener('click', movePrev);
+        
+        let autoPlayTimer = setInterval(moveNext, 6000); // 6秒ごとの自動送り
+        
+        // 操作時はタイマーをリセット
+        const resetAutoPlay = () => {
+            clearInterval(autoPlayTimer);
+            autoPlayTimer = setInterval(moveNext, 8000);
+        };
+        nextBtn.addEventListener('click', resetAutoPlay);
+        prevBtn.addEventListener('click', resetAutoPlay);
 
 
-        // --- カスタムモーダル表示制御 ---
+        // --- Contact Form Logic (Akiyoshi's GAS URL) ---
+        const contactForm = document.getElementById('myContactForm');
         const modal = document.getElementById('modal');
-        const modalIcon = document.getElementById('modal-icon');
-        const modalTitle = document.getElementById('modal-title');
-        const modalDesc = document.getElementById('modal-desc');
+        const modalContent = document.getElementById('modalContent');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
 
-        function showModal(isSuccess, title, desc) {
-            // アイコンと色調の設定
-            if (isSuccess) {
-                modalIcon.className = "w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 text-3xl bg-emerald-100 text-emerald-600";
-                modalIcon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
-            } else {
-                modalIcon.className = "w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 text-3xl bg-rose-100 text-rose-600";
-                modalIcon.innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
-            }
-
+        function showCustomModal(isSuccess, title, desc) {
+            modalIcon.innerHTML = isSuccess ? '<i class="fa-solid fa-circle-check" style="color: var(--accent-forest)"></i>' : '<i class="fa-solid fa-circle-exclamation" style="color: #e11d48"></i>';
             modalTitle.textContent = title;
             modalDesc.textContent = desc;
-
-            // 表示
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            modal.querySelector('div').classList.remove('scale-95');
-            modal.querySelector('div').classList.add('scale-100');
+            
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+            modalContent.style.transform = 'scale(1)';
         }
 
         function closeModal() {
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            modal.querySelector('div').classList.remove('scale-100');
-            modal.querySelector('div').classList.add('scale-95');
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+            modalContent.style.transform = 'scale(0.95)';
+        }
+
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Akiyoshiさんのお問い合わせフォーム用GAS URL
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbxdBZ5SELYTDpTwFi-wWDPF-OcX7IiP7f1YWPeHy8ilS-YwyRxdWcUp9hbnwCSgjeHh/exec'; 
+
+            if(!scriptURL || scriptURL === 'なし') {
+                showCustomModal(false, 'デモモード', '現在送信機能は停止されています。');
+                contactForm.reset();
+                return;
+            }
+
+            const formData = new FormData(contactForm);
+            const submitButton = contactForm.querySelector('button');
+            const originalHTML = submitButton.innerHTML;
+            
+            submitButton.innerHTML = '<span>Sending...</span><i class="fa-solid fa-spinner animate-spin"></i>';
+            submitButton.disabled = true;
+
+            fetch(scriptURL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' // CORS問題対応のためno-corsモードで送信
+            })
+            .then(() => {
+                showCustomModal(true, '送信完了', 'メッセージが送信されました！内容を確認後、必要に応じてご連絡差し上げます。');
+                contactForm.reset();
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                showCustomModal(false, 'エラー', '送信に失敗しました。お手数ですが、再度お試しください。');
+            })
+            .finally(() => {
+                submitButton.innerHTML = originalHTML;
+                submitButton.disabled = false;
+            });
+        });
+
+
+        // --- Three.js Fluid Simulation (Akiyoshi Organic Color Theme) ---
+        let scene, camera, renderer, size, targetA, targetB;
+        let simMaterial, drawMaterial, simQuad, drawQuad;
+        let simScene, drawScene;
+        let mouse = new THREE.Vector2(-10, -10);
+        let prevMouse = new THREE.Vector2(-10, -10);
+        let isMoving = 0.0;
+        let clock = new THREE.Clock();
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+            
+            renderer = new THREE.WebGLRenderer({ alpha: false, antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            size = new THREE.Vector2(window.innerWidth, window.innerHeight);
+            
+            // Render Targetの設定
+            targetA = new THREE.WebGLRenderTarget(size.x, size.y, {
+                minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat, type: THREE.FloatType,
+                depthBuffer: false, stencilBuffer: false
+            });
+            targetB = targetA.clone();
+
+            // 流体シミュレーションシェーダー (Akiyoshiカラーブレンド仕様)
+            const simFragmentShader = `
+                uniform sampler2D u_buffer; 
+                uniform vec2 u_resolution; 
+                uniform vec2 u_mouse;
+                uniform float u_dt; 
+                uniform float u_is_moving; 
+                uniform float u_time;
+
+                // Simple Noise Generation
+                vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+                float snoise(vec2 v) {
+                    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                    vec2 i = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx);
+                    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                    vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1;
+                    i = mod289(i); vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+                    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                    m = m*m; m = m*m; vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                    vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox;
+                    m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+                    vec3 g; g.x = a0.x * x0.x + h.x * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                    return 130.0 * dot(m, g);
+                }
+                
+                vec2 curl(vec2 p) {
+                    float eps = 0.01; float n = snoise(p);
+                    float a = snoise(p + vec2(eps, 0.0)); float b = snoise(p + vec2(0.0, eps));
+                    return vec2(b - n, -(a - n)) / eps;
+                }
+
+                // Akiyoshiブランドを反映したアース＆フロンターレカラーパレット
+                vec3 getAkiyoshiPalette(float t) {
+                    vec3 forestGreen = vec3(0.12, 0.28, 0.15); // 森の深い緑
+                    vec3 curryGold   = vec3(0.85, 0.52, 0.1);  // スパイスカレーの黄金
+                    vec3 frontaleSky = vec3(0.12, 0.61, 0.89); // フロンターレの澄んだ青
+                    vec3 lightCream  = vec3(0.96, 0.98, 0.96); // 爽やかな背景クリーム
+                    
+                    float cycle = mod(t * 0.12, 4.0); 
+                    float idx = floor(cycle); 
+                    float f = fract(cycle);
+                    
+                    if (idx == 0.0) return mix(forestGreen, lightCream, f); 
+                    if (idx == 1.0) return mix(lightCream, curryGold, f);
+                    if (idx == 2.0) return mix(curryGold, frontaleSky, f); 
+                    return mix(frontaleSky, forestGreen, f);
+                }
+
+                void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution.xy; 
+                    vec2 aspect = vec2(u_resolution.x / u_resolution.y, 1.0);
+                    
+                    float dist = distance(uv * aspect, u_mouse * aspect);
+                    float radius = 0.06; 
+                    float intensity = exp(-pow(dist / radius, 2.0)) * u_is_moving;
+                    
+                    vec3 targetColor = getAkiyoshiPalette(u_time);
+                    
+                    // 流体の揺らぎとうねりを計算
+                    vec2 flow = curl(uv * 1.5 + u_time * 0.03); 
+                    vec2 offset = flow * 0.0025;
+                    vec2 samplePos = uv - offset;
+                    
+                    // 境界外サンプリング対策
+                    if (samplePos.x < 0.0 || samplePos.x > 1.0 || samplePos.y < 0.0 || samplePos.y > 1.0) {
+                        samplePos = uv;
+                    }
+
+                    vec4 base = texture2D(u_buffer, samplePos);
+                    
+                    // 流体色とベースのブレンド
+                    vec3 finalColor = mix(base.rgb * 0.985, targetColor, intensity * 0.15);
+                    
+                    // 初期状態の自然なグラデーション
+                    if(u_time < 0.5) {
+                        finalColor = mix(vec3(0.97, 0.99, 0.97), vec3(0.93, 0.96, 0.94), uv.y);
+                    }
+
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `;
+
+            const drawFragmentShader = `
+                uniform sampler2D u_buffer;
+                uniform vec2 u_resolution;
+                void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                    gl_FragColor = texture2D(u_buffer, uv);
+                }
+            `;
+
+            // シミュレーション用シーンのセットアップ
+            simScene = new THREE.Scene();
+            simMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    u_buffer: { value: null },
+                    u_resolution: { value: size },
+                    u_mouse: { value: mouse },
+                    u_dt: { value: 0 },
+                    u_is_moving: { value: 0 },
+                    u_time: { value: 0 }
+                },
+                vertexShader: `void main(){ gl_Position = vec4(position,1.0); }`,
+                fragmentShader: simFragmentShader,
+                depthWrite: false, depthTest: false
+            });
+            simQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial);
+            simScene.add(simQuad);
+
+            // メイン画面描画用
+            drawScene = new THREE.Scene();
+            drawMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    u_buffer: { value: null },
+                    u_resolution: { value: size }
+                },
+                vertexShader: `void main(){ gl_Position = vec4(position,1.0); }`,
+                fragmentShader: drawFragmentShader,
+                depthWrite: false, depthTest: false
+            });
+            drawQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), drawMaterial);
+            drawScene.add(drawQuad);
+
+            // イベント登録
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('touchmove', onTouchMove, { passive: true });
+            window.addEventListener('resize', onWindowResize);
+            
+            animate();
+        }
+
+        function onMouseMove(e) {
+            mouse.x = e.clientX / window.innerWidth;
+            mouse.y = 1.0 - (e.clientY / window.innerHeight);
+            isMoving = 1.0;
+        }
+
+        function onTouchMove(e) {
+            if(e.touches.length > 0) {
+                mouse.x = e.touches[0].clientX / window.innerWidth;
+                mouse.y = 1.0 - (e.touches[0].clientY / window.innerHeight);
+                isMoving = 1.0;
+            }
+        }
+
+        function onWindowResize() {
+            size.set(window.innerWidth, window.innerHeight);
+            renderer.setSize(size.x, size.y);
+            targetA.setSize(size.x, size.y);
+            targetB.setSize(size.x, size.y);
+            simMaterial.uniforms.u_resolution.value = size;
+            drawMaterial.uniforms.u_resolution.value = size;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // マウス停止検知
+            if (mouse.distanceTo(prevMouse) < 0.0001) {
+                isMoving = Math.max(0.0, isMoving - dt * 2.0);
+            } else {
+                isMoving = Math.min(1.0, isMoving + dt * 5.0);
+            }
+            prevMouse.copy(mouse);
+
+            // ダブルバッファによる流体フィードバックシミュレーション
+            simMaterial.uniforms.u_buffer.value = targetA.texture;
+            simMaterial.uniforms.u_mouse.value = mouse;
+            simMaterial.uniforms.u_dt.value = dt;
+            simMaterial.uniforms.u_is_moving.value = isMoving;
+            simMaterial.uniforms.u_time.value = time;
+
+            renderer.setRenderTarget(targetB);
+            renderer.render(simScene, camera);
+
+            // 描画
+            drawMaterial.uniforms.u_buffer.value = targetB.texture;
+            renderer.setRenderTarget(null);
+            renderer.render(drawScene, camera);
+
+            // ターゲットをスワップ
+            let temp = targetA;
+            targetA = targetB;
+            targetB = temp;
+        }
+
+        // 初期化トリガー
+        window.onload = function () {
+            initThreeJS();
         }
     </script>
 </body>
