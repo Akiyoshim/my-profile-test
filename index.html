@@ -719,7 +719,7 @@
                     <span class="profile-role">Always Learning, Always Exploring</span>
                     <p class="profile-desc">
                         日常のあらゆる瞬間から新しい学びや体験を吸収し、常に自分の可能性を開拓し続けています。<br><br>
-                        探究心を満たしてくれる奥深いスパイスカレー、フィールドで一体となって応援し、運営するフットボール、そして心を静かにクリアに導いてくれる森の景色。それらを通じて得られる刺激と癒やしが、私の活動の原動力です。
+                        探究心を満たしてくれる奥深いスパイスカレー、フィールドで一体となって応援し、運営するフットボール、精度高く機能するWebシステム。それらを通じて得られる刺激と癒やしが、私の活動の原動力です。
                     </p>
                     <div class="tag-container">
                         <span class="tag"># Spice Curry</span>
@@ -944,7 +944,7 @@
         prevBtn.addEventListener('click', resetAutoPlay);
 
 
-        // --- Contact Form Logic (Akiyoshi's GAS URL) ---
+        // --- Contact Form Logic (Akiyoshi's GAS URL / JSON formatting) ---
         const contactForm = document.getElementById('myContactForm');
         const modal = document.getElementById('modal');
         const modalContent = document.getElementById('modalContent');
@@ -987,10 +987,17 @@
             submitButton.innerHTML = '<span>Sending...</span><i class="fa-solid fa-spinner animate-spin"></i>';
             submitButton.disabled = true;
 
+            // GAS側の doPost(e) の JSON.parse(e.postData.contents) に完全に合致するオブジェクトデータを作成します
+            const payload = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                message: formData.get('message')
+            };
+
             fetch(scriptURL, {
                 method: 'POST',
-                body: formData,
-                mode: 'no-cors' // CORS問題対応のためno-corsモードで送信
+                body: JSON.stringify(payload), // データをJSON文字列としてシリアライズして送信
+                mode: 'no-cors' // CORS問題対応のためno-corsモードで送信（GAS側へペイロードは到達します）
             })
             .then(() => {
                 showCustomModal(true, '送信完了', 'メッセージが送信されました！内容を確認後、必要に応じてご連絡差し上げます。');
